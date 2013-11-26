@@ -17,16 +17,17 @@ def check_firefox():
         tempinput = tempfile.readlines()
         oldlatest = tempinput[0]
         if newlatest == oldlatest:
-                print 'IS GLEICH'
+                return True
         else:
-                print 'NICHT GLEICH'
-                print newlatest
-                print oldlatest
                 tempfile.seek(0)
                 tempfile.write(newlatest)
                 tempfile.truncate()
+                return False
         tempfile.close()
-        return
 
 if __name__ == "__main__":
-        check_firefox()
+        if  check_firefox():
+                tempfile = open("firefox.tmp", "r")
+                newlatest = tempfile.readlines()
+                print "Neue Version: "+newlatest[0]
+                tempfile.close()
