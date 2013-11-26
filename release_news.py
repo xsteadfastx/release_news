@@ -1,4 +1,6 @@
 import os
+import sys
+import xmpp
 from ftplib import FTP
 
 def check_firefox():
@@ -17,17 +19,19 @@ def check_firefox():
         tempinput = tempfile.readlines()
         oldlatest = tempinput[0]
         if newlatest == oldlatest:
-                return True
+                return False
         else:
                 tempfile.seek(0)
                 tempfile.write(newlatest)
                 tempfile.truncate()
-                return False
+                return True 
         tempfile.close()
 
 if __name__ == "__main__":
-        if  check_firefox():
+        if check_firefox():
                 tempfile = open("firefox.tmp", "r")
                 newlatest = tempfile.readlines()
                 print "Neue Version: "+newlatest[0]
                 tempfile.close()
+        else:
+                pass 
