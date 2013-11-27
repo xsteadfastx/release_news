@@ -24,5 +24,3 @@ def sendmessage(fromjid, password, tojid, message):
         time.sleep(1)
 
         cl.disconnect()
-
-#sendmessage('newz@xsteadfastx.org','n3wz','marvin@xsteadfastx.org','foo bar')
