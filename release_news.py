@@ -39,22 +39,25 @@ class release_news:
                 tempfile = open(tmpfile, "r+")
                 if newlatest != oldlatest:
                         newversionmessage = "New Version: "+newlatest
-                        #sendmessage(fromjid, password, tojid, newversionmessage)
-                        print newversionmessage
+                        notification(newversionmessage)
                         tempfile.seek(0)
                         tempfile.write(newlatest)
                         tempfile.truncate()
                 else:
-                        print "alles alt"
+                        pass 
                 tempfile.close()
+
+def notification(message):
+        fromjid = sys.argv[1]
+        password = sys.argv[2]
+        tojid = sys.argv[3]
+
+        sendmessage(fromjid, password, tojid, message)
 
 if __name__ == "__main__":
         if len(sys.argv) < 3:
                 print "Syntax: release_news.py FROMJID PASSWORD TOJID"
                 sys.exit(0)
-        fromjid = sys.argv[1]
-        password = sys.argv[2]
-        tojid = sys.argv[3]
 
         firefox = release_news('firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
         firefox.check()
