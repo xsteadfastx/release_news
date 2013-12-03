@@ -35,20 +35,18 @@ class release_news:
         def check(self):
                 newlatest = self.getnewlatest()
                 oldlatest = self.getoldlatest()
-                print newlatest
-                print oldlatest
+                tmpfile = self.softwarename+".tmp"
+                tempfile = open(tmpfile, "r+")
                 if newlatest != oldlatest:
-                        newversionmessage = "New Version: "+self.getnewlatest()
+                        newversionmessage = "New Version: "+newlatest
                         #sendmessage(fromjid, password, tojid, newversionmessage)
                         print newversionmessage
-                else:
-                        tmpfile = self.softwarename+".tmp"
-                        tempfile = open(tmpfile, "r+")
                         tempfile.seek(0)
                         tempfile.write(newlatest)
                         tempfile.truncate()
+                else:
                         print "alles alt"
-                        tempfile.close()
+                tempfile.close()
 
 if __name__ == "__main__":
         if len(sys.argv) < 3:
