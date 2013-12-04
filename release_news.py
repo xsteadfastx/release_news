@@ -38,7 +38,7 @@ class release_news:
                 tmpfile = self.softwarename+".tmp"
                 tempfile = open(tmpfile, "r+")
                 if newlatest != oldlatest:
-                        newversionmessage = "New Version: "+newlatest
+                        newversionmessage = "New %s Version: %s ftp://%s/%s" % (self.softwarename, newlatest, self.serveradress, self.serverdir)
                         notification(newversionmessage)
                         tempfile.seek(0)
                         tempfile.write(newlatest)
