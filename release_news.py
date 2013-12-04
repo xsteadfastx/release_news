@@ -75,5 +75,8 @@ if __name__ == "__main__":
         firefox = release_news('latest', 'firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
         firefox.check()
 
+        thunderbird = release_news('latest', 'thunderbird', 'ftp.mozilla.org', 'pub/thunderbird/releases/latest-esr/win32/de/')
+        thunderbird.check()
+
         acrobatreader = release_news('sort', 'acrobatreader', 'ftp.adobe.com', 'pub/adobe/reader/win/11.x')
         acrobatreader.check()
