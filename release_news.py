@@ -1,58 +1,58 @@
 import os
 import sys
-from sendclient import sendmessage
+from sendclient import SendMessage
 from ftplib import FTP
 
 
 class release_news:
-        def __init__(self, softwarename, serveradress, serverdir):
-                self.softwarename = softwarename
-                self.serveradress = serveradress
-                self.serverdir = serverdir
+        def __init__(self, SoftwareName, ServerAdress, ServerDir):
+                self.SoftwareName = SoftwareName
+                self.ServerAdress = ServerAdress
+                self.ServerDir = ServerDir
 
-        def getnewlatest(self):
-                ftp = FTP(self.serveradress)
+        def GetNewLatest(self):
+                ftp = FTP(self.ServerAdress)
                 ftp.login()
-                ftp.cwd(self.serverdir)
-                filelist = ftp.nlst()
-                newlatest = filelist[0]
-                return newlatest
+                ftp.cwd(self.ServerDir)
+                FileList = ftp.nlst()
+                NewLatest = FileList[0]
+                return NewLatest
 
-        def getoldlatest(self):
-                tempfilename = self.softwarename+".tmp"
-                if os.path.exists(tempfilename):
-                        tempfile = open(tempfilename, "r+")
+        def GetOldLatest(self):
+                TempFilename = self.SoftwareName+".tmp"
+                if os.path.exists(TempFilename):
+                        TempFile = open(TempFilename, "r+")
                 else:
-                        tempfile = open(tempfilename, "w")
-                        tempfile.write(self.softwarename)
-                        tempfile.close()
-                        tempfile = open(tempfilename, "r+")
-                tempinput = tempfile.readlines()
-                tempfile.close()
-                oldlatest = tempinput[0]
-                return oldlatest
+                        TempFile = open(TempFilename, "w")
+                        TempFile.write(self.SoftwareName)
+                        TempFile.close()
+                        TempFile = open(TempFilename, "r+")
+                TempInput = TempFile.readlines()
+                TempFile.close()
+                OldLatest = TempInput[0]
+                return OldLatest
 
         def check(self):
-                newlatest = self.getnewlatest()
-                oldlatest = self.getoldlatest()
-                tempfilename = self.softwarename+".tmp"
-                tempfile = open(tempfilename, "r+")
-                if newlatest != oldlatest:
-                        newversionmessage = "New %s Version: %s ftp://%s/%s" % (self.softwarename, newlatest, self.serveradress, self.serverdir)
-                        notification(newversionmessage)
-                        tempfile.seek(0)
-                        tempfile.write(newlatest)
-                        tempfile.truncate()
+                NewLatest = self.GetNewLatest()
+                OldLatest = self.GetOldLatest()
+                TempFileName = self.SoftwareName+".tmp"
+                TempFile = open(TempFileName, "r+")
+                if NewLatest != OldLatest:
+                        NewVersionMessage = "New %s Version: %s ftp://%s/%s" % (self.SoftwareName, NewLatest, self.ServerAdress, self.ServerDir)
+                        notification(NewVersionMessage)
+                        TempFile.seek(0)
+                        TempFile.write(NewLatest)
+                        TempFile.truncate()
                 else:
-                        pass 
-                tempfile.close()
+                        pass
+                TempFile.close()
 
 def notification(message):
-        fromjid = sys.argv[1]
+        FromJID = sys.argv[1]
         password = sys.argv[2]
-        tojid = sys.argv[3]
+        ToJID = sys.argv[3]
 
-        sendmessage(fromjid, password, tojid, message)
+        SendMessage(FromJID, password, ToJID, message)
 
 if __name__ == "__main__":
         if len(sys.argv) < 3:

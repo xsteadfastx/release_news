@@ -1,8 +1,8 @@
 import xmpp
-import sys 
+import sys
 import time
 
-def sendmessage(fromjid, password, tojid, message):
+def SendMessage(fromjid, password, tojid, message):
         jid=xmpp.protocol.JID(fromjid)
         cl=xmpp.Client(jid.getDomain(),debug=[])
 
