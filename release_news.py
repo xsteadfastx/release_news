@@ -2,21 +2,34 @@ import os
 import sys
 from sendclient import SendMessage
 from ftplib import FTP
+from distutils.version import LooseVersion
 
 
 class release_news:
-        def __init__(self, SoftwareName, ServerAdress, ServerDir):
+        def __init__(self, FTPMethod, SoftwareName, ServerAdress, ServerDir):
+                self.FTPMethod = FTPMethod
                 self.SoftwareName = SoftwareName
                 self.ServerAdress = ServerAdress
                 self.ServerDir = ServerDir
 
         def GetNewLatest(self):
-                ftp = FTP(self.ServerAdress)
-                ftp.login()
-                ftp.cwd(self.ServerDir)
-                FileList = ftp.nlst()
-                NewLatest = FileList[0]
-                return NewLatest
+                if self.FTPMethod == 'latest':
+                        ftp = FTP(self.ServerAdress)
+                        ftp.login()
+                        ftp.cwd(self.ServerDir)
+                        FileList = ftp.nlst()
+                        NewLatest = FileList[0]
+                        return NewLatest
+                elif self.FTPMethod == 'sort':
+                        ftp = FTP(self.ServerAdress)
+                        ftp.login()
+                        ftp.cwd(self.ServerDir)
+                        FileList = ftp.nlst()
+                        SortList = sorted(FileList, key=LooseVersion)
+                        NewLatest = SortList[-1]
+                        return NewLatest
+                else:
+                        pass
 
         def GetOldLatest(self):
                 TempFilename = self.SoftwareName+".tmp"
@@ -59,5 +72,8 @@ if __name__ == "__main__":
                 print "Syntax: release_news.py FROMJID PASSWORD TOJID"
                 sys.exit(0)
 
-        firefox = release_news('firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
+        firefox = release_news('latest', 'firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
         firefox.check()
+
+        acrobatreader = release_news('sort', 'acrobatreader', 'ftp.adobe.com', 'pub/adobe/reader/win/11.x')
+        acrobatreader.check()
