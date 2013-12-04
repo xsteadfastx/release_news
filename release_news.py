@@ -19,14 +19,14 @@ class release_news:
                 return newlatest
 
         def getoldlatest(self):
-                tmpfile = self.softwarename+".tmp"
-                if os.path.exists(tmpfile):
-                        tempfile = open(tmpfile, "r+")
+                tempfilename = self.softwarename+".tmp"
+                if os.path.exists(tempfilename):
+                        tempfile = open(tempfilename, "r+")
                 else:
-                        tempfile = open(tmpfile, "w")
+                        tempfile = open(tempfilename, "w")
                         tempfile.write(self.softwarename)
                         tempfile.close()
-                        tempfile = open(tmpfile, "r+")
+                        tempfile = open(tempfilename, "r+")
                 tempinput = tempfile.readlines()
                 tempfile.close()
                 oldlatest = tempinput[0]
@@ -35,8 +35,8 @@ class release_news:
         def check(self):
                 newlatest = self.getnewlatest()
                 oldlatest = self.getoldlatest()
-                tmpfile = self.softwarename+".tmp"
-                tempfile = open(tmpfile, "r+")
+                tempfilename = self.softwarename+".tmp"
+                tempfile = open(tempfilename, "r+")
                 if newlatest != oldlatest:
                         newversionmessage = "New %s Version: %s ftp://%s/%s" % (self.softwarename, newlatest, self.serveradress, self.serverdir)
                         notification(newversionmessage)
