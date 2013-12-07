@@ -109,3 +109,9 @@ if __name__ == "__main__":
 
         flash = release_news('heise', 'flash', 'http://www.heise.de/download/adobe-flash-player.html', 'none')
         flash.check()
+
+        sevenzip = release_news('heise', '7zip', 'http://www.heise.de/download/7-zip.html', 'none')
+        sevenzip.check()
+
+        tightvnc = release_news('heise', 'tightvnc', 'http://www.heise.de/download/tightvnc.html', 'none')
+        tightvnc.check()
