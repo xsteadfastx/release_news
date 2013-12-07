@@ -1,33 +1,53 @@
 import os
 import sys
+import requests
 from sendclient import SendMessage
 from ftplib import FTP
 from distutils.version import LooseVersion
+from bs4 import BeautifulSoup
 
 
 class release_news:
-        def __init__(self, FTPMethod, SoftwareName, ServerAdress, ServerDir):
-                self.FTPMethod = FTPMethod
+        def __init__(self, CheckMethod, SoftwareName, ServerAdress, ServerDir):
+                self.CheckMethod = CheckMethod
                 self.SoftwareName = SoftwareName
                 self.ServerAdress = ServerAdress
                 self.ServerDir = ServerDir
 
+        def GetNewLatestFTPDir(self):
+                ftp = FTP(self.ServerAdress)
+                ftp.login()
+                ftp.cwd(self.ServerDir)
+                FileList = ftp.nlst()
+                SortList = sorted(FileList, key=LooseVersion)
+                NewLatest = SortList[-1]
+                return NewLatest
+
+        def GetNewLatestFTPFile(self):
+                ftp = FTP(self.ServerAdress)
+                ftp.login()
+                ftp.cwd(self.ServerDir)
+                FileList = ftp.nlst()
+                NewLatest = FileList[0]
+                return NewLatest
+
+        def GetNewLatestHeise(self):
+                request = requests.get(self.ServerAdress)
+                SiteContent = request.text
+                soup = BeautifulSoup(SiteContent)
+                FindVersion = soup.find_all(property="og:title")
+                for found in FindVersion:
+                        version = found.get('content')
+                NewLatest = version
+                return NewLatest
+
         def GetNewLatest(self):
-                if self.FTPMethod == 'latest':
-                        ftp = FTP(self.ServerAdress)
-                        ftp.login()
-                        ftp.cwd(self.ServerDir)
-                        FileList = ftp.nlst()
-                        NewLatest = FileList[0]
-                        return NewLatest
-                elif self.FTPMethod == 'sort':
-                        ftp = FTP(self.ServerAdress)
-                        ftp.login()
-                        ftp.cwd(self.ServerDir)
-                        FileList = ftp.nlst()
-                        SortList = sorted(FileList, key=LooseVersion)
-                        NewLatest = SortList[-1]
-                        return NewLatest
+                if self.CheckMethod == 'ftpfile':
+                         return self.GetNewLatestFTPFile()
+                elif self.CheckMethod == 'ftpdir':
+                        return self.GetNewLatestFTPDir()
+                elif self.CheckMethod == 'heise':
+                        return self.GetNewLatestHeise()
                 else:
                         pass
 
@@ -51,7 +71,10 @@ class release_news:
                 TempFileName = self.SoftwareName+".tmp"
                 TempFile = open(TempFileName, "r+")
                 if NewLatest != OldLatest:
-                        NewVersionMessage = "New %s Version: %s ftp://%s/%s" % (self.SoftwareName, NewLatest, self.ServerAdress, self.ServerDir)
+                        if self.CheckMethod == 'heise':
+                                NewVersionMessage = "New %s Version: %s %s" % (self.SoftwareName, NewLatest, self.ServerAdress)
+                        else:
+                                NewVersionMessage = "New %s Version: %s ftp://%s/%s" % (self.SoftwareName, NewLatest, self.ServerAdress, self.ServerDir)
                         notification(NewVersionMessage)
                         TempFile.seek(0)
                         TempFile.write(NewLatest)
@@ -72,11 +95,17 @@ if __name__ == "__main__":
                 print "Syntax: release_news.py FROMJID PASSWORD TOJID"
                 sys.exit(0)
 
-        firefox = release_news('latest', 'firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
+        firefox = release_news('ftpfile', 'firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
         firefox.check()
 
-        thunderbird = release_news('latest', 'thunderbird', 'ftp.mozilla.org', 'pub/thunderbird/releases/latest-esr/win32/de/')
+        thunderbird = release_news('ftpfile', 'thunderbird', 'ftp.mozilla.org', 'pub/thunderbird/releases/latest-esr/win32/de/')
         thunderbird.check()
 
-        acrobatreader = release_news('sort', 'acrobatreader', 'ftp.adobe.com', 'pub/adobe/reader/win/11.x')
+        acrobatreader = release_news('ftpdir', 'acrobatreader', 'ftp.adobe.com', 'pub/adobe/reader/win/11.x')
         acrobatreader.check()
+
+        jre = release_news('heise', 'jre', 'http://www.heise.de/download/java-runtime-environment-jre.html', 'none')
+        jre.check()
+
+        flash = release_news('heise', 'flash', 'http://www.heise.de/download/adobe-flash-player.html', 'none')
+        flash.check()
