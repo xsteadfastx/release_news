@@ -81,12 +81,13 @@ def get_version_from_ftp_files(url):
 
 class ReleaseNews(object):
 
-    def __init__(self):
+    def __init__(self, versions_file='versions.json'):
         self.check_list = []
+        self.versions_file = versions_file
 
         # try to open version.json file
         try:
-            with open('versions.json', 'r') as f:
+            with open(self.versions_file, 'r') as f:
                 self.version_dict = json.load(f)
 
         # if there is no versions.json file
@@ -96,7 +97,7 @@ class ReleaseNews(object):
     def _safe(self):
         '''Safe version json file to remember everything.
         '''
-        with open('versions.json', 'w') as f:
+        with open(self.versions_file, 'w') as f:
             json.dump(self.version_dict, f)
 
     def check_this(self, func):

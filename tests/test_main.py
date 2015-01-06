@@ -1,11 +1,15 @@
 import pytest
 import responses
 import mock
+import json
+import tempfile
+import os
 
 from release_news import (
     get_version_from_heise,
     get_version_from_ftp_files,
-    get_version_from_ftp_dir)
+    get_version_from_ftp_dir,
+    ReleaseNews)
 
 
 @pytest.fixture
@@ -31,6 +35,40 @@ def ftp_filelist():
 @pytest.fixture
 def ftp_dirlist():
     return ['11.0.00', '11.0.02', '11.0.03', '11.0.04', '11.0.10', 'QFE']
+
+
+@pytest.fixture
+def versions_json(request):
+    '''Empty versions.json tempfile.
+    '''
+    versions_tempfile = tempfile.mktemp()
+
+    def fin():
+        if os.path.exists(versions_tempfile):
+            os.remove(versions_tempfile)
+
+    request.addfinalizer(fin)
+    return versions_tempfile
+
+
+@pytest.fixture
+def versions_json_content(request):
+    '''versions.json tempfile with json content.
+    '''
+    versions_tempfile = tempfile.mktemp()
+
+    content = {"jre": "Java Runtime Environment (JRE) 8u25",
+               "firefox": "Firefox Setup 34.0.5.exe",
+               "acrobat_reader": "11.0.10"}
+
+    with open(versions_tempfile, 'w') as f:
+        json.dump(content, f)
+
+    def fin():
+        os.remove(versions_tempfile)
+
+    request.addfinalizer(fin)
+    return versions_tempfile
 
 
 @responses.activate
@@ -66,3 +104,16 @@ def test_get_version_from_ftp_dir(mock_nlst, ftp_dirlist):
     url = 'ftp://ftp.adobe.com/pub/adobe/reader/win/11.x'
 
     assert get_version_from_ftp_dir(url) == '11.0.10'
+
+
+def test_ReleaseNews(versions_json, versions_json_content):
+    release_news = ReleaseNews(versions_file=versions_json)
+
+    assert release_news.version_dict == {}
+
+    release_news = ReleaseNews(versions_file=versions_json_content)
+
+    assert release_news.version_dict == {
+        u'jre': u'Java Runtime Environment (JRE) 8u25',
+        u'firefox': u'Firefox Setup 34.0.5.exe',
+        u'acrobat_reader': u'11.0.10'}
