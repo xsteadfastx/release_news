@@ -1,117 +1,162 @@
-import os
-import sys
-import requests
-from sendclient import SendMessage
+from bs4 import BeautifulSoup
 from ftplib import FTP
 from distutils.version import LooseVersion
-from bs4 import BeautifulSoup
+from urlparse import urlparse
+import requests
+import json
+import sleekxmpp
+import click
 
 
-class release_news:
-        def __init__(self, CheckMethod, SoftwareName, ServerAdress, ServerDir):
-                self.CheckMethod = CheckMethod
-                self.SoftwareName = SoftwareName
-                self.ServerAdress = ServerAdress
-                self.ServerDir = ServerDir
+class SendMsg(sleekxmpp.ClientXMPP):
 
-        def GetNewLatestFTPDir(self):
-                ftp = FTP(self.ServerAdress)
-                ftp.login()
-                ftp.cwd(self.ServerDir)
-                FileList = ftp.nlst()
-                SortList = sorted(FileList, key=LooseVersion)
-                NewLatest = SortList[-1]
-                return NewLatest
+    def __init__(self, jid, password, recipient, message):
+        sleekxmpp.ClientXMPP.__init__(self, jid, password)
 
-        def GetNewLatestFTPFile(self):
-                ftp = FTP(self.ServerAdress)
-                ftp.login()
-                ftp.cwd(self.ServerDir)
-                FileList = ftp.nlst()
-                NewLatest = FileList[0]
-                return NewLatest
+        self.recipient = recipient
+        self.msg = message
 
-        def GetNewLatestHeise(self):
-                request = requests.get(self.ServerAdress)
-                SiteContent = request.text
-                soup = BeautifulSoup(SiteContent)
-                FindVersion = soup.find_all(property="og:title")
-                for found in FindVersion:
-                        version = found.get('content')
-                NewLatest = version
-                return NewLatest
+        self.add_event_handler('session_start', self.start, threaded=True)
 
-        def GetNewLatest(self):
-                if self.CheckMethod == 'ftpfile':
-                         return self.GetNewLatestFTPFile()
-                elif self.CheckMethod == 'ftpdir':
-                        return self.GetNewLatestFTPDir()
-                elif self.CheckMethod == 'heise':
-                        return self.GetNewLatestHeise()
-                else:
-                        pass
+    def start(self, event):
+        self.send_presence()
+        self.get_roster()
 
-        def GetOldLatest(self):
-                TempFilename = self.SoftwareName+".tmp"
-                if os.path.exists(TempFilename):
-                        TempFile = open(TempFilename, "r+")
-                else:
-                        TempFile = open(TempFilename, "w")
-                        TempFile.write(self.SoftwareName)
-                        TempFile.close()
-                        TempFile = open(TempFilename, "r+")
-                TempInput = TempFile.readlines()
-                TempFile.close()
-                OldLatest = TempInput[0]
-                return OldLatest
+        self.send_message(mto=self.recipient,
+                          mbody=self.msg,
+                          mtype='chat')
 
-        def check(self):
-                NewLatest = self.GetNewLatest()
-                OldLatest = self.GetOldLatest()
-                TempFileName = self.SoftwareName+".tmp"
-                TempFile = open(TempFileName, "r+")
-                if NewLatest != OldLatest:
-                        if self.CheckMethod == 'heise':
-                                NewVersionMessage = "New %s Version: %s %s" % (self.SoftwareName, NewLatest, self.ServerAdress)
-                        else:
-                                NewVersionMessage = "New %s Version: %s ftp://%s/%s" % (self.SoftwareName, NewLatest, self.ServerAdress, self.ServerDir)
-                        notification(NewVersionMessage)
-                        TempFile.seek(0)
-                        TempFile.write(NewLatest)
-                        TempFile.truncate()
-                else:
-                        pass
-                TempFile.close()
+        self.disconnect(wait=True)
 
-def notification(message):
-        FromJID = sys.argv[1]
-        password = sys.argv[2]
-        ToJID = sys.argv[3]
 
-        SendMessage(FromJID, password, ToJID, message)
+def send_msg(jid, password, recipient, message):
+    xmpp = SendMsg(jid, password, recipient, message)
+    xmpp.register_plugin('xep_0030')
+    xmpp.register_plugin('xep_0199')
+    if xmpp.connect():
+        xmpp.process(block=True)
 
-if __name__ == "__main__":
-        if len(sys.argv) < 3:
-                print "Syntax: release_news.py FROMJID PASSWORD TOJID"
-                sys.exit(0)
 
-        firefox = release_news('ftpfile', 'firefox', 'ftp.mozilla.org', 'pub/firefox/releases/latest/win32/de/')
-        firefox.check()
+def get_version_from_heise(url):
+    '''Extract version from Heise downloads.
+    '''
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text)
+    return soup.find(property='og:title')['content']
 
-        thunderbird = release_news('ftpfile', 'thunderbird', 'ftp.mozilla.org', 'pub/thunderbird/releases/latest-esr/win32/de/')
-        thunderbird.check()
 
-        acrobatreader = release_news('ftpdir', 'acrobatreader', 'ftp.adobe.com', 'pub/adobe/reader/win/11.x')
-        acrobatreader.check()
+def get_version_from_ftp_dir(url):
+    '''Extract version from FTP directory.
+    '''
+    url = urlparse(url)
+    ftp = FTP(url.netloc)
+    ftp.login()
+    ftp.cwd(url.path)
+    filelist = ftp.nlst()
+    ftp.close()
+    return sorted(filelist, key=LooseVersion)[-1]
 
-        jre = release_news('heise', 'jre', 'http://www.heise.de/download/java-runtime-environment-jre.html', 'none')
-        jre.check()
 
-        flash = release_news('heise', 'flash', 'http://www.heise.de/download/adobe-flash-player.html', 'none')
-        flash.check()
+def get_version_from_ftp_files(url):
+    '''Extract version from FTP files.
+    '''
+    url = urlparse(url)
+    ftp = FTP(url.netloc)
+    ftp.login()
+    ftp.cwd(url.path)
+    filelist = ftp.nlst()
+    ftp.close()
+    return filelist[0]
 
-        sevenzip = release_news('heise', '7zip', 'http://www.heise.de/download/7-zip.html', 'none')
-        sevenzip.check()
 
-        tightvnc = release_news('heise', 'tightvnc', 'http://www.heise.de/download/tightvnc.html', 'none')
-        tightvnc.check()
+class ReleaseNews(object):
+
+    def __init__(self):
+        self.check_list = []
+
+        # try to open version.json file
+        try:
+            with open('versions.json', 'r') as f:
+                self.version_dict = json.load(f)
+
+        # if there is no versions.json file
+        except IOError:
+            self.version_dict = {}
+
+    def _safe(self):
+        '''Safe version json file to remember everything.
+        '''
+        with open('versions.json', 'w') as f:
+            json.dump(self.version_dict, f)
+
+    def check_this(self, func):
+        '''Decorator to add function to check list.
+        '''
+        self.check_list.append(func)
+
+    def checker(self, jid, password, recipient):
+        '''The checker itself.
+        '''
+        for func in self.check_list:
+            update_information = func()
+            saved_version = self.version_dict.get(func.__name__)
+
+            latest_version = update_information['version']
+
+            if saved_version != latest_version:
+                message = 'New Version for {} {}'.format(
+                    func.__name__, update_information['url'])
+
+                send_msg(jid, password, recipient, message)
+
+                self.version_dict[func.__name__] = latest_version
+
+        # safe versions.json file
+        self._safe()
+
+
+# init release_news
+release_news = ReleaseNews()
+
+
+@release_news.check_this
+def jre():
+    url = 'http://www.heise.de/download/java-runtime-environment-jre.html'
+    return {'version': get_version_from_heise(url),
+            'url': url}
+
+
+@release_news.check_this
+def firefox():
+    url = 'ftp://ftp.mozilla.org/pub/firefox/releases/latest/win32/de/'
+    return {'version': get_version_from_ftp_files(url),
+            'url': url}
+
+
+@release_news.check_this
+def acrobat_reader():
+    url = 'ftp://ftp.adobe.com/pub/adobe/reader/win/11.x'
+    return {'version': get_version_from_ftp_dir(url),
+            'url': url}
+
+
+@click.command()
+@click.option('--jid',
+              '-j',
+              help='JID to log into XMPP Server.',
+              prompt=True)
+@click.option('--password',
+              '-p',
+              help='Password for XMPP Server.',
+              prompt=True)
+@click.option('--recipient',
+              '-r',
+              help='Recipient to send notification to.',
+              prompt=True)
+def main(jid, password, recipient):
+    # run the checker
+    release_news.checker(jid, password, recipient)
+
+
+if __name__ == '__main__':
+    main()
