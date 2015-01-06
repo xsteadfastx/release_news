@@ -56,9 +56,12 @@ def get_version_from_ftp_dir(url):
     ftp = FTP(url.netloc)
     ftp.login()
     ftp.cwd(url.path)
-    filelist = [i for i in ftp.nlst() if re.search(r'.*[0-9].*', i)]
+
+    # only add version to dirlist if it has a number in it
+    dirlist = [i for i in ftp.nlst() if re.search(r'.*[0-9].*', i)]
+
     ftp.close()
-    return sorted(filelist, key=LooseVersion)[-1]
+    return sorted(dirlist, key=LooseVersion)[-1]
 
 
 def get_version_from_ftp_files(url):
@@ -68,7 +71,10 @@ def get_version_from_ftp_files(url):
     ftp = FTP(url.netloc)
     ftp.login()
     ftp.cwd(url.path)
-    filelist = ftp.nlst()
+
+    # only add version to filelist if it has a number in it
+    filelist = [i for i in ftp.nlst() if re.search(r'.*[0-9.*]', i)]
+
     ftp.close()
     return filelist[0]
 
