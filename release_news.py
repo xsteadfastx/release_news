@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
 from ftplib import FTP
 from distutils.version import LooseVersion
-from urlparse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 import requests
 import json
 import sleekxmpp
