@@ -9,6 +9,7 @@ import requests
 import json
 import sleekxmpp
 import click
+import re
 
 
 class SendMsg(sleekxmpp.ClientXMPP):
@@ -55,7 +56,7 @@ def get_version_from_ftp_dir(url):
     ftp = FTP(url.netloc)
     ftp.login()
     ftp.cwd(url.path)
-    filelist = ftp.nlst()
+    filelist = [i for i in ftp.nlst() if re.search(r'.*[0-9].*', i)]
     ftp.close()
     return sorted(filelist, key=LooseVersion)[-1]
 
