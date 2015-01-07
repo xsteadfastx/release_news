@@ -106,10 +106,17 @@ def test_get_version_from_ftp_dir(mock_nlst, ftp_dirlist):
     assert get_version_from_ftp_dir(url) == '11.0.10'
 
 
-def test_ReleaseNews(versions_json, versions_json_content):
-    release_news = ReleaseNews(versions_file=versions_json)
-
-    assert release_news.version_dict == {}
+@mock.patch('release_news.send_msg')
+@responses.activate
+def test_ReleaseNews(mock_send_msg,
+                     versions_json,
+                     versions_json_content,
+                     heise_html):
+    url = 'http://www.heise.de/download/firefox.html'
+    responses.add(responses.GET,
+                  url,
+                  body=heise_html,
+                  status=200)
 
     release_news = ReleaseNews(versions_file=versions_json_content)
 
@@ -117,3 +124,15 @@ def test_ReleaseNews(versions_json, versions_json_content):
         u'jre': u'Java Runtime Environment (JRE) 8u25',
         u'firefox': u'Firefox Setup 34.0.5.exe',
         u'acrobat_reader': u'11.0.10'}
+
+    release_news = ReleaseNews(versions_file=versions_json)
+
+    assert release_news.version_dict == {}
+
+    @release_news.check_this
+    def firefox():
+        url = 'http://www.heise.de/download/firefox.html'
+        return {'version': get_version_from_heise(url),
+                'url': url}
+
+    release_news.checker()
