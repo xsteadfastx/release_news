@@ -1,2 +1,10 @@
 *.tmp
 *.pyc
+versions.json
+env
+.tox
+.coverage
+coverage.xml
+junit-*.xml
+*.out
+release_news-cron.sh

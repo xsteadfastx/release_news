@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd /opt/release_news
+source env/bin/activate
+
+python release_news.py -j bot@jabber.foo.tld -p mypassword -r me@jabber.foo.tld
