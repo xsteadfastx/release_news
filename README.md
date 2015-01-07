@@ -3,6 +3,8 @@ release_news
 
 [![Build Status](https://travis-ci.org/xsteadfastx/release_news.svg?branch=master)](https://travis-ci.org/xsteadfastx/release_news)
 
+Checks different sources for new software versions and notificate over xmpp.
+
 ## install
 1. `git clone https://github.com/xsteadfastx/release_news.git /opt/release_news`
 2. `cd /opt/release_news`
